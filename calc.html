@@ -1,0 +1,413 @@
+<!-- Another useless project by accendant03-->
+<!DOCTYPE html>
+<html>
+<head>
+<title></title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0" />
+<style type="text/css">
+	:root{
+		--special-buttons-bg: rgba(255, 100, 100, 1.0);
+		--special-buttons-col: rgba(250, 250, 250, 1.0);
+	
+	}
+	body {
+		background-color: rgba(70, 70, 70, 1.0);
+	}
+		
+	.buttons {
+		display: grid;
+		grid-template-columns: auto auto auto auto;
+		row-gap: 4vh;
+		column-gap: 2vh;
+	}
+	
+	.buttons > button {
+		height: 50px;
+		font-size: 20px;
+		font-weight: bold;
+		border-radius: 10px;
+		background-color: rgba(200, 200, 200, 1.0);
+	}
+	.buttons > .clear {
+		grid-column-start: 1;
+		grid-column-end: 3;
+		background-color: var(--special-buttons-bg);
+		color: var(--special-buttons-col);
+	}
+	
+	.buttons > .equals {
+		background-color: rgba(100, 255, 100, 1.0);
+		color: var(--special-buttons-col);
+	}
+	.buttons > .backspace {
+		background-color: var(--special-buttons-bg);
+		color: var(--special-buttons-col);
+	}
+	.buttons > .numbers {
+		background-color: var(--special-buttons-col);
+	
+	}
+	.display {
+		height: 130px;
+		background-color: rgba(100, 100, 100, 0.5);
+		border-radius: 5px;
+		display: flex;
+		border: 3px solid rgba(50, 50, 50, 0.8);
+	}
+	#numberViews {
+		width: 100%;
+		margin-top: 2vh;
+		color: rgba(200, 200, 200, 1.0);		
+		display: flex;
+		font-size: 30px;
+		font-weight: bold;
+		align-items: flex-end;
+		justify-content: space-around;
+		flex-direction: column;
+		word-wrap: break-word;
+		word-break: break-all;
+		padding: 10px;
+		overflow: scroll;
+		box-sizing: border-box;
+	}
+	.operationView {
+		margin: 6px;
+		display: grid;
+		grid-template-column: auto;
+		gap: 6px 0px;
+	}
+	.operationView > .operator {
+		padding: 3px 7px;
+		border-radius: 6px;
+		color: rgba(255, 255, 255, 1.0);
+		background-color: rgba(120, 120, 120, 1.0);
+		font-weight: bold;
+	}
+	@media (orientation: landscape){
+		body {
+			width: 100%;
+			display: flex;
+			flex-direction: center;
+			justify-content: space-around;
+			align-items: center;
+		}
+		.display {
+			width: 40%;
+			height: 50vh;			
+		}
+		.buttons {
+			row-gap: 1vh;
+			width: 55%;
+			height: 80vh;		
+		}
+		#numberViews {
+			font-size: 15px;
+			
+		}
+	}
+</style>
+</head>
+<body>
+
+<div class="display">
+	<div id="numberViews">
+		<div class="firstLineView"></div>
+		<div class="secondLineView"></div>
+	</div>
+	<div class="operationView">
+		<div class="operator" id="op-divide">&divide;</div>
+		<div class="operator" id="op-times">&times;</div>
+		<div class="operator" id="op-minus">&minus;</div>
+		<div class="operator" id="op-plus">&plus;</div>	
+	</div>
+</div><br><br>
+
+<div class="buttons">
+	<button class="clear" id="clear">C</button>
+	<button class="backspace">&lt;</button>
+	<button id="divide" class="operation">&divide;</button>
+	<button class="numbers">7</button>
+	<button class="numbers">8</button>
+	<button class="numbers">9</button>
+	<button id="multiply" class="operation">&times;</button>
+	<button class="numbers">4</button>
+	<button class="numbers">5</button>
+	<button class="numbers">6</button>
+	<button id="subtract" class="operation">&minus;</button>
+	<button class="numbers">1</button>
+	<button class="numbers">2</button>
+	<button class="numbers">3</button>
+	<button id="add" class="operation">&plus;</button>
+	<button class="pos-neg">&plusmn;</button>
+	<button class="numbers">0</button>
+	<button class="point">&middot;</button>
+	<button class="equals">&equals;</button>
+</div>
+
+
+<noscript>Please open js</noscript>
+<script type="text/javascript">
+	//dynamically loads the decimal.js from the server	
+	const scriptTag = document.createElement('script');
+	scriptTag.src = `http://${location.hostname}:${location.port}/node_modules/decimal.js/decimal.js`;
+	document.body.appendChild(scriptTag);
+</script>
+
+
+
+<script type="text/javascript">
+const buttons = document.querySelectorAll('button');
+
+let firstLine = '';
+let secondLine = '';
+let operation = null;
+
+//calc history and app states
+let prevSecondLine = '';
+let prevOperation = '';
+let isEqualsOnPrev = false;
+let history = [];
+
+function calculate(){
+	let result = '';
+	
+	if (secondLine.length <= 0 ){
+		return;
+	}
+	
+	try {
+		preciseCalc();
+	} catch (error){
+		nativeCalc();
+	}
+	
+	function nativeCalc(){
+		const first = parseFloat(firstLine);
+		const second = parseFloat(secondLine);
+		
+		switch (operation){
+			case 'divide':
+				result = (first / second);
+				break;
+	
+			case 'multiply': 
+				result = (first * second);
+				break;
+			
+			case 'subtract':
+				result = (first - second);
+				break;
+		
+			case 'add':
+				result = (first + second);
+				break;
+				
+			default:
+				alert('invalid operation');
+		}
+	}
+	
+	function preciseCalc(){
+		let first = new Decimal(firstLine);
+		let second = new Decimal(secondLine);
+		switch (operation){
+			case 'divide':
+				result = first.dividedBy(second);
+				break;
+		
+			case 'multiply': 
+				result = first.times(second);
+				break;
+			
+			case 'subtract':
+				result = first.minus(second);
+				break;
+		
+			case 'add':
+				result = first.plus(second);
+				break;
+		
+			default:
+				alert('invalid operation');
+		}
+	}
+		
+	history.push({
+		firstLineUsed: firstLine,
+		secondLineUsed: secondLine,
+		operationUsed: operation,
+	});
+	firstLine = result.toString();
+	prevSecondLine = secondLine;
+	prevOperation = operation;
+	secondLine = '';
+	isEqualsOnPrev = true;
+	operation = null;
+}
+
+function inTimeCalculations(){
+	//i will do this uhh...
+	//execute if operation is not null and
+	//secondLine is not empty
+	//but i should not implement this on separate function
+}
+
+function updateDisplay(){
+	const firstLineView = document.querySelector('.firstLineView');
+	const secondLineView = document.querySelector('.secondLineView');
+	const divideOperator = document.querySelector('#op-divide');
+	const timesOperator = document.querySelector('#op-times');
+	const minusOperator = document.querySelector('#op-minus');
+	const plusOperator = document.querySelector('#op-plus');
+	
+	const bgColor = 'rgba(200, 200, 200, 0.9)';
+	
+	firstLineView.textContent = firstLine;
+	secondLineView.textContent = secondLine;
+	revertOperationDisplay();
+	if (operation == null){
+		revertOperationDisplay();
+	} else {
+		switch (operation){
+			case 'divide':
+				divideOperator.style.backgroundColor = bgColor;		
+				break;
+		
+			case 'multiply': 
+				timesOperator.style.backgroundColor = bgColor;
+					
+				break;
+		
+			case 'subtract':
+				minusOperator.style.backgroundColor = bgColor;
+				
+				break;
+		
+			case 'add':
+				plusOperator.style.backgroundColor = bgColor;
+				
+				break;
+			default:
+				alert('invalid operation');
+		}	
+	}
+		
+	function revertOperationDisplay(){
+		document.querySelectorAll('.operator').forEach(function (opElms){
+			opElms.style.backgroundColor = 'rgba(120, 120, 120, 1.0)';
+		});
+	}
+}
+
+
+function positiveNegative(){
+	const negativeSign = '-';
+	if (operation == null){
+		if (firstLine.startsWith(negativeSign)){
+			firstLine = firstLine.slice(1, firstLine.length);
+		} else firstLine = negativeSign.concat(firstLine);
+	} else {
+		if (secondLine.startsWith(negativeSign)){
+			secondLine = secondLine.slice(1, secondLine.length);
+		} else secondLine = negativeSign.concat(secondLine);
+		
+	}
+
+}
+
+function decimal(){
+	if (operation == null){
+		if (firstLine.slice(firstLine.length - 1, firstLine.length) == '.'){
+			backspace();
+		} else {
+			if (!firstLine.includes('.')) firstLine = firstLine.concat('.');
+		}
+	} else {
+		if (secondLine.slice(secondLine.length - 1, secondLine.length) == '.'){
+			backspace();
+		
+		} else {
+			if(!secondLine.includes('.')) secondLine = secondLine.concat('.');
+		}
+	}
+}
+
+
+function backspace(){
+	if (operation == null){
+		firstLine = firstLine.slice(0, -1);
+	} else {
+		if (secondLine.length > 0){	
+			secondLine = secondLine.slice(0, -1);			
+		} else operation = null;
+	}
+}
+
+function clearScreen(){
+	firstLine = '';
+	secondLine = '';
+	isEqualsOnPrev = false;
+	operation = null;
+	operationSymbol = null;
+	prevSecondLine = '';
+	prevOperation = '';
+}
+
+
+
+buttons.forEach(function (button){
+	button.addEventListener('click', function (){
+		switch (this.className){
+			case 'numbers':	
+				if (isEqualsOnPrev && operation == null) clearScreen();	
+				
+				if (operation == null){
+					if (firstLine.length < 11) firstLine = firstLine.concat(this.textContent);			
+				} else {
+					if (secondLine.length < 11) secondLine = secondLine.concat(this.textContent);
+				}
+				break;
+				
+			case 'operation':
+				if (firstLine.length > 0){
+					if (secondLine.length > 0){calculate();}
+						operation = this.id;
+				}
+				break;
+				
+			case 'pos-neg':
+				positiveNegative();
+				break;
+				
+			case 'point':
+				decimal();				
+				break;
+			
+			case 'clear':
+				clearScreen();	
+				break;
+				
+			case 'backspace':
+				backspace();				
+				break;
+				
+			case 'equals':
+				if (secondLine.length == 0 && isEqualsOnPrev && firstLine > 0){
+					secondLine = prevSecondLine;
+					operation = prevOperation;
+				}
+				calculate();
+				break;	
+				
+			default: 
+				alert('unknown button');		
+		}
+		updateDisplay();
+	});
+
+});
+
+</script>
+</body>
+</html>
